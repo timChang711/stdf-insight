@@ -37,10 +37,11 @@ STDF Insight 是以瀏覽器本機解析為核心的半導體測試資料分析�
 git clone https://github.com/timChang711/stdf-insight.git
 cd stdf-insight
 npm ci
-npm run dev:local
+npm run build:local
+npm start
 ```
 
-Open `http://localhost:5173`.
+Open `http://localhost:3000`.
 
 ### macOS / Linux
 
@@ -48,10 +49,11 @@ Open `http://localhost:5173`.
 git clone https://github.com/timChang711/stdf-insight.git
 cd stdf-insight
 npm ci
-npm run dev:local
+npm run build:local
+npm start
 ```
 
-### Local production mode
+### Run the built application locally
 
 ```bash
 npm ci
@@ -87,7 +89,7 @@ Open `http://localhost:3000`. See [Local deployment](docs/LOCAL_DEPLOYMENT.md) f
 |---|---|
 | `npm run dev:local` | Cross-platform local development server |
 | `npm run build:local` | Cross-platform production build |
-| `npm run start:local` | Vinext production server; see the documented Windows asset limitation |
+| `npm run start:local` | Local Worker runtime for the built application (port 3000) |
 | `npm run preview:local` | Preview the existing Cloudflare build on loopback port 5175 |
 | `npm run check:local` | Lint, typecheck, synthetic regressions, production build and rendered-HTML check |
 | `npm run test:ui` | Local Edge interaction checks against a running loopback server |
@@ -134,4 +136,4 @@ Application source, backend routes, Worker code, database schema and migrations,
 
 The production project identity was removed from `.openai/hosting.json`; the `DB` binding declaration remains for local development. Production environment values, credentials, live database rows, uploaded files, dependency installations, and build outputs are not included. Restoring feedback/analytics requires your own database and `FEEDBACK_RATE_LIMIT_SECRET`; hosted authentication requires its corresponding trusted gateway. Do not commit those secrets.
 
-Only backup metadata, clone instructions, a local filesystem path in a historical report, and the hosting identity differ from the source snapshot. The original source Git history was not imported. No website deployment was performed. Backup validation checks file hashes and repository contents; historical test results in documentation are not new test runs.
+Only backup metadata, clone instructions, a local filesystem path in a historical report, and the hosting identity differ from the source snapshot. The original source Git history was not imported. No website deployment was performed. The initial backup checked file hashes and repository contents. Subsequent fixes and fresh test results are documented in [Local verification](docs/VERIFICATION_2026-11-02.md).

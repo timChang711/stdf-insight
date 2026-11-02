@@ -57,32 +57,31 @@ npm ci
 npm run dev:local
 ```
 
-For production mode:
+To run the built application locally:
 
 ```bash
 npm run build:local
 npm run start:local
 ```
 
-## 4. Change the production port
+## 4. Change the local runtime port
 
 Direct command:
 
 ```bash
-npx vinext start --hostname 0.0.0.0 --port 8080
+npm run start:local -- --port 8080
 ```
 
-PowerShell environment variable:
+PowerShell:
 
 ```powershell
-$env:PORT = "8080"
-npx vinext start --hostname 0.0.0.0
+npm run start:local -- --port 8080
 ```
 
 Linux or macOS:
 
 ```bash
-PORT=8080 npx vinext start --hostname 0.0.0.0
+npm run start:local -- --port 8080
 ```
 
 ## 5. Docker deployment
@@ -184,7 +183,7 @@ Version 0.1.0 does not persist users, projects, parsed data, or uploaded files. 
 Run on a different port:
 
 ```bash
-npx vinext start --hostname 0.0.0.0 --port 3001
+npm run start:local -- --port 3001
 ```
 
 ### `.stdf.gz` does not open
@@ -195,7 +194,7 @@ npx vinext start --hostname 0.0.0.0 --port 3001
 
 ### File opens but no tests appear
 
-The current parser requires common PRR and PTR measurement data. Review [STDF support](STDF_SUPPORT.md). MPR-, FTR-, or vendor-specific-only files require parser expansion.
+PTR numeric analysis and dedicated FTR/MPR record inspection are supported. Empty record-family tabs are hidden. Review [STDF support](STDF_SUPPORT.md) for remaining limitations.
 
 ### Browser becomes slow
 
@@ -204,3 +203,7 @@ The current parser requires common PRR and PTR measurement data. Review [STDF su
 - Use a workstation with more memory.
 - Do not promise a supported maximum file size until qualification is complete on target customer hardware.
 
+
+## Verified runtime (2026-11-02)
+
+The built project imports Cloudflare Worker APIs. The start:local command uses Wrangler local mode; plain Node/Vinext start cannot load cloudflare:workers. This is a local preview runtime, not a certified Internet production server. Feedback, analytics and hosted sign-in need separate environment/database configuration. See [verification results](VERIFICATION_2026-11-02.md). Docker was not validated in this verification.

@@ -5,7 +5,7 @@ import { gzipSync } from 'node:zlib';
 import { chromium } from 'playwright-core';
 import { syntheticStdf } from './synthetic-stdf.mjs';
 
-const url=process.env.STDF_TEST_URL||'http://127.0.0.1:5175';
+const url=process.env.STDF_TEST_URL||'http://127.0.0.1:3000';
 assert.ok(['localhost','127.0.0.1','[::1]'].includes(new URL(url).hostname));
 const output=path.resolve('outputs/record-coverage');fs.mkdirSync(output,{recursive:true});
 const envelope=(type,subtype,length)=>{const value=Buffer.alloc(4+length);value.writeUInt16LE(length);value[2]=type;value[3]=subtype;return value;};
@@ -22,7 +22,7 @@ const load=async(buffer,name='synthetic-coverage.stdf')=>{
   await page.getByRole('status').filter({hasText:'parsed locally'}).waitFor();
 };
 try{
-  await page.goto(url);await page.waitForLoadState('networkidle');
+  await page.goto(url);await page.getByRole('button', { name: 'Open STDF', exact: true }).first().waitFor();
   await load(bytes);
   assert.equal(await panel().getAttribute('open'),null);
   await panel().locator('summary').focus();await page.keyboard.press('Enter');
@@ -61,7 +61,7 @@ try{
   assert.match(await panel().locator('summary').innerText(),/Record coverage and source details/);
   await panel().locator('summary').click();
   assert.equal(await row('15/20').count(),0);
-  await page.getByRole('button',{name:'Run options'}).click();await page.getByRole('button',{name:'Clear workspace',exact:true}).click();
+  await page.getByRole('button',{name:'Open navigation',exact:true}).click();await page.getByRole('button',{name:'Run options'}).click();await page.getByRole('button',{name:'Clear workspace',exact:true}).click();
   assert.equal(await panel().count(),0);
   pass('sample/new run/clear removes stale coverage and preserves honest synthetic-demo state');
   assert.deepEqual(errors,[]);pass('no browser runtime errors');

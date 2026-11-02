@@ -5,7 +5,7 @@ import { chromium } from 'playwright-core';
 import { syntheticStdf } from './synthetic-stdf.mjs';
 
 // Entirely generated fixtures. Never run company STDF or capture its identifiers here.
-const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:5175';
+const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:3000';
 assert.ok(['localhost', '127.0.0.1', '[::1]'].includes(new URL(url).hostname));
 const output = path.resolve('outputs/round2/wafer');
 fs.mkdirSync(output, { recursive: true });
@@ -38,7 +38,7 @@ const map = () => page.locator('.wafer-page .wafer-grid-map');
 const die = (x, y) => map().locator(`.wafer-die[data-x="${x}"][data-y="${y}"]`);
 const fullMap = () => page.getByRole('region', { name: 'Scrollable wafer coordinate grid' });
 try {
-  await page.goto(url); await page.waitForLoadState('networkidle');
+  await page.goto(url); await page.getByRole('button', { name: 'Open STDF', exact: true }).first().waitFor();
   await load(fixture(128));
   assert.match(await map().getAttribute('aria-label'), /Pass \/ fail/);
   assert.equal(await page.locator('.wafer-page .map-mode button.active').evaluate(element => getComputedStyle(element).color), 'rgb(255, 255, 255)');

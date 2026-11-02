@@ -5,7 +5,7 @@ import { chromium } from 'playwright-core';
 import { syntheticStdf } from './synthetic-stdf.mjs';
 
 // Every STDF byte and screenshot in this suite is generated, never company data.
-const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:5175';
+const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:3000';
 const isLocal = value => ['localhost', '127.0.0.1', '[::1]'].includes(new URL(value).hostname);
 assert.ok(isLocal(url), 'Wafer inspector UI tests require a loopback URL');
 const output = path.resolve('outputs/round3/wafer-inspector');
@@ -141,7 +141,7 @@ const clickCenter = async locator => {
 };
 
 try {
-  await page.goto(url); await page.waitForLoadState('networkidle');
+  await page.goto(url); await page.getByRole('button', { name: 'Open STDF', exact: true }).first().waitFor();
   await load('synthetic-inspector.stdf');
   assert.equal(await cellWidth(), 32);
   assert.equal(await slider().getAttribute('min'), '4');
@@ -334,7 +334,7 @@ try {
   assert.equal(await size().inputValue(), '32');
   assert.equal(await inspector().getByRole('article').count(), 0);
   await clickCenter(die(1));
-  await page.getByRole('button', { name: 'Run options' }).click();
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click(); await page.getByRole('button', { name: 'Run options' }).click();
   await page.getByRole('button', { name: 'Clear workspace', exact: true }).click();
   assert.equal(await page.locator('.empty-active-file').count(), 1);
   await assertCoverage('cleared workspace', 0);

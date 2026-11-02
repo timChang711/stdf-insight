@@ -7,7 +7,7 @@ import { syntheticStdf } from './synthetic-stdf.mjs';
 import { createStdfBuilder, ftrOnlyFixture, mprDefaultsFixture, mprScanFixture, defaultOnlyFixture, scanRecords } from './fixtures/typed-stdf.mjs';
 
 // Local Edge, generated fixtures only. No company STDF or external requests.
-const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:5175';
+const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:3000';
 const local = address => ['localhost', '127.0.0.1', '[::1]'].includes(new URL(address).hostname);
 assert.ok(local(url), 'Typed UI tests require a loopback URL');
 const output = path.resolve('outputs/round4/typed');
@@ -58,7 +58,7 @@ const counts = async (records, parts) => assert.deepEqual(await explorer().locat
 const verdicts = () => rows().locator('td:nth-child(2) .typed-verdict').allTextContents();
 
 try {
-  await page.goto(url); await page.waitForLoadState('networkidle');
+  await page.goto(url); await page.getByRole('button', { name: 'Open STDF', exact: true }).first().waitFor();
   const ftr = ftrOnlyFixture();
   await load(ftr, 'synthetic-ftr-only.stdf');
   const pinPanel = () => page.locator('.pin-mapping-panel');
@@ -86,9 +86,7 @@ try {
   assert.equal(await catalog().locator('tbody tr.catalog-row').count(), 1);
   assert.match(await explorer().locator('.typed-analysis-boundary').innerText(), /Histograms and capability statistics are not applied/);
   assert.doesNotMatch(await page.locator('.record-coverage-panel > summary').innerText(), /not analyzed/);
-  await family('PTR').click();
-  assert.match(await page.locator('.test-family-workspace').innerText(), /No PTR measurements/);
-  await family('FTR').click();
+  assert.equal(await family('PTR').count(), 0, 'empty PTR family is hidden rather than inventing measurements');
   pass('FTR-only run opens seven original records across six parts without invented PTR samples; family navigation and recorded outcomes remain explicit');
 
   await explorer().getByRole('combobox', { name: 'Record verdict' }).selectOption('fail');
@@ -283,7 +281,7 @@ try {
   await page.getByRole('status').filter({ hasText: 'Loading cancelled' }).waitFor();
   assert.equal(await page.locator('.active-file small').innerText(), 'synthetic-unknown-prr.stdf');
   assert.equal(await evidence().innerText(), before);
-  await page.getByRole('button', { name: 'Run options' }).click();
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click(); await page.getByRole('button', { name: 'Run options' }).click();
   await page.getByRole('button', { name: 'Clear workspace', exact: true }).click();
   assert.equal(await page.locator('.empty-active-file').count(), 1);
   await load(ftr, 'synthetic-ftr-reopened.stdf');

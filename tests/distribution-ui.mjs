@@ -5,7 +5,7 @@ import { chromium } from 'playwright-core';
 import { syntheticStdf } from './synthetic-stdf.mjs';
 
 // These browser checks generate every record in memory; no customer data is read.
-const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:5175';
+const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:3000';
 const isLoopback = value => ['localhost', '127.0.0.1', '[::1]'].includes(new URL(value).hostname);
 assert.ok(isLoopback(url), 'Distribution UI tests require a loopback URL');
 const output = path.resolve('outputs/distribution');
@@ -90,6 +90,7 @@ const openAdvanced = async () => {
     await workspace().getByText('Advanced settings', { exact: true }).click();
   }
 };
+const openRaw = async () => { const panel = page.locator('details.workspace-advanced').filter({ hasText: 'Raw data & column filters' }); if (await panel.getAttribute('open') === null) await panel.locator('summary').click(); };
 const openDistribution = async () => {
   await page.getByRole('button', { name: 'Distribution', exact: true }).click();
   await workspace().waitFor();
@@ -101,7 +102,7 @@ const load = async (name, values, limits) => {
   });
   await page.getByRole('status').filter({ hasText: 'parsed locally' }).waitFor();
   await page.waitForFunction(fileName => document.querySelector('.active-file small')?.textContent === fileName, name);
-  await page.getByRole('button', { name: 'Test explorer' }).click();
+  await page.getByRole('navigation', { name: 'Workspace views' }).getByRole('button', { name: 'Analysis', exact: true }).click();
   await workspace().waitFor();
 };
 const expectCount = async (shown, numeric = shown) => {
@@ -128,7 +129,7 @@ const apply = async () => {
 
 try {
   await page.goto(url);
-  await page.waitForLoadState('networkidle');
+  await page.getByRole('button', { name: 'Open STDF', exact: true }).first().waitFor();
   // Binary-exact endpoints and spacing keep the independent bin-edge checks
   // separate from STDF R*4 display rounding.
   const values = Array.from({ length: 21 }, (_, index) => 5.625 + index / 64);
@@ -293,35 +294,35 @@ try {
   assert.equal(await workspace().locator('.jmp-normal-curve').count(), 1);
   pass('manual width keeps equal full bins and the normal overlay; moving the slider replaces manual width immediately');
 
-  await page.getByRole('combobox', { name: 'Filter by site', exact: true }).selectOption('1');
+  await page.getByRole('combobox', { name: 'Analysis site', exact: true }).selectOption('1');
   await expectCount(11);
   await expectStats(values.filter((_, index) => index % 2 === 0));
-  await page.getByRole('button', { name: 'Raw data', exact: true }).click();
+  await openRaw();
   await page.getByRole('textbox', { name: 'Filter sequence column', exact: true }).fill('1..7');
   await openDistribution();
   await expectCount(4);
   await expectStats(values.filter((_, index) => index < 7 && index % 2 === 0));
-  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear all filters', exact: true }).click(); await page.getByRole('combobox', { name: 'Analysis site', exact: true }).selectOption('all');
   await expectCount(21);
   assert.equal(await width().inputValue(), '0.03125');
   assert.deepEqual(await summary(), originalStats);
   pass('site and raw sequence filters update the histogram and independently checked statistics; clear preserves the applied scale');
 
-  await page.getByRole('button', { name: 'Raw data', exact: true }).click();
+  await openRaw();
   await page.getByRole('textbox', { name: 'Filter sequence column', exact: true }).fill('999..1000');
   await openDistribution();
   assert.match(await workspace().locator('.distribution-empty').innerText(), /No numeric data to plot/);
-  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear all filters', exact: true }).click(); await page.getByRole('combobox', { name: 'Analysis site', exact: true }).selectOption('all');
   await expectCount(21);
   pass('empty filtered populations show recovery guidance and restore correctly after clear');
 
-  for (const plot of ['Site box plot', 'Sequence', 'CDF', 'Raw data']) {
+  for (const plot of ['By site', 'Sequence', 'CDF']) {
     await page.getByRole('button', { name: plot, exact: true }).click();
     await openDistribution();
     assert.equal(await width().inputValue(), '0.03125');
   }
   await width().fill('0.0625'); // A draft must survive a tab switch without being applied.
-  await page.getByRole('button', { name: 'Raw data', exact: true }).click();
+  await openRaw();
   await openDistribution();
   assert.equal(await width().inputValue(), '0.0625');
   assert.equal(await bars().count(), 10);
@@ -365,7 +366,7 @@ try {
     });
     assert.equal(dimensions.overflow, false, `horizontal overflow at ${viewportWidth}`);
     assert.ok(dimensions.plotWidth > 200 && dimensions.plotHeight > 100, `readable chart at ${viewportWidth}`);
-    assert.ok(dimensions.inputs.every(input => input.width >= 80 && input.height >= (input.type === 'range' ? 24 : 30) && input.left >= 0 && input.right <= viewportWidth + 1));
+    assert.ok(dimensions.inputs.every(input => input.width >= 80 && input.height >= (input.type === 'range' ? 24 : 30) && input.left >= 0 && input.right <= viewportWidth + 1), JSON.stringify({ viewportWidth, dimensions }));
     assert.ok(dimensions.numericLines.every(lines => lines === 1), `summary numbers must not wrap at ${viewportWidth}`);
     const screenshot = path.join(output, `distribution-${viewportWidth}.png`);
     await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
@@ -424,7 +425,7 @@ try {
   assert.ok(Math.abs(Number(mixedSummary.Mean) - (Math.fround(5.7) + Math.fround(5.8)) / 2) < 1e-6);
   assert.ok(Math.abs(Number(mixedSummary['Fail %']) - 100 / 3) < 1e-5);
   assert.match(await workspace().locator('.jmp-summary p').innerText(), /all 3 filtered records/);
-  await page.getByRole('button', { name: 'Raw data', exact: true }).click();
+  await openRaw();
   assert.equal((await page.locator('.raw-count b').innerText()).replaceAll(',', ''), '3 / 3');
   assert.equal(await page.locator('.raw-data tbody tr').count(), 3);
   assert.equal(await page.locator('.raw-data tbody .raw-result.fail').count(), 1);

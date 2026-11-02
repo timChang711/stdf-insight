@@ -57,7 +57,7 @@ export default function AnalysisWorkspace({ run, tests, selectedTest, filteredTe
   const resultsRef = useRef<HTMLElement>(null);
   const pendingInspectorScroll = useRef(false);
   const [localDistributions, setLocalDistributions] = useState<Record<number, DistributionState>>({});
-  const fallbackDistribution = useMemo(initialDistribution, []);
+  const fallbackDistribution = useMemo(() => initialDistribution(), []);
   const chartState = distributionState ?? localDistributions[selectedTest.id] ?? fallbackDistribution;
   const setChartState = (next: DistributionState) => onDistributionChange ? onDistributionChange(next) : setLocalDistributions(previous => ({ ...previous, [selectedTest.id]: next }));
   const [mapMode, setMapMode] = useState<MapMode>("parametric");
