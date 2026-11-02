@@ -1,0 +1,63 @@
+{
+  "name": "semi-stdf-analytics",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "install:ci": "bash scripts/install-ci.sh",
+    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vite",
+    "dev:local": "vite --host 0.0.0.0",
+    "build": "bash scripts/build-verified.sh",
+    "build:local": "vinext build",
+    "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "start:local": "vinext start --hostname 0.0.0.0 --port 3000",
+    "check:local": "npm run lint && npm run typecheck && npm run test:unit && npm run build:local && npm run test:rendered",
+    "docker:build": "docker build -t semi-stdf-analytics:local .",
+    "docker:run": "docker run --rm -p 3000:3000 semi-stdf-analytics:local",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "node --experimental-strip-types --test tests/stdf.test.mjs tests/statistics.test.mjs tests/distribution.test.mjs tests/die-inspection.test.mjs tests/record-coverage.test.mjs tests/ftr.test.mjs tests/mpr.test.mjs tests/pmr.test.mjs tests/stdf-flags.test.mjs tests/record-defaults.test.mjs tests/typed-records.test.mjs tests/payload-cache.test.mjs tests/feedback-validation.test.mjs tests/usage-validation.test.mjs tests/run-comparison.test.mjs tests/test-catalog-sort.test.mjs",
+    "test:rendered": "node --test tests/rendered-html.test.mjs",
+    "test:ui": "node tests/ui-smoke.mjs",
+    "preview:local": "vite preview --host 127.0.0.1 --port 5175",
+    "test:distribution:ui": "node tests/distribution-ui.mjs",
+    "test:wafer:ui": "node tests/wafer-ui.mjs",
+    "test:wafer-inspector:ui": "node tests/wafer-inspector-ui.mjs",
+    "test:coverage:ui": "node tests/record-coverage-ui.mjs",
+    "test:typed:ui": "node tests/typed-records-ui.mjs"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2",
+    "fflate": "0.8.3",
+    "next": "16.2.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.37.1",
+    "@cloudflare/workers-types": "4.20260702.1",
+    "@tailwindcss/postcss": "4.2.1",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-rsc": "0.5.26",
+    "drizzle-kit": "0.31.10",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.6",
+    "playwright-core": "1.63.0",
+    "react-server-dom-webpack": "19.2.6",
+    "tailwindcss": "4.2.1",
+    "typescript": "5.9.3",
+    "vinext": "0.0.50",
+    "vite": "8.0.13",
+    "wrangler": "4.92.0"
+  },
+  "type": "module",
+  "displayName": "STDF Insight",
+  "license": "UNLICENSED"
+}

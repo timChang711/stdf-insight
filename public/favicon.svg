@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>STDF Insight</title>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="#232230" stroke="#49475F"/>
+  <circle cx="16" cy="16" r="9.25" fill="none" stroke="#5B5579" stroke-width="1.5"/>
+  <path d="M10.25 19.75 14 16l3.25 2.25L22 12" fill="none" stroke="#A99CFF" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="10.25" cy="19.75" r="1.35" fill="#A99CFF"/>
+  <circle cx="14" cy="16" r="1.35" fill="#A99CFF"/>
+  <circle cx="17.25" cy="18.25" r="1.35" fill="#A99CFF"/>
+  <circle cx="22" cy="12" r="2" fill="#43C59E"/>
+</svg>

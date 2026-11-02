@@ -1,0 +1,14 @@
+services:
+  semi-stdf-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: semi-stdf-analytics:local
+    container_name: semi-stdf-analytics
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+

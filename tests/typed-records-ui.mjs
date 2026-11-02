@@ -1,0 +1,302 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { chromium } from 'playwright-core';
+import { gzipSync } from 'node:zlib';
+import { syntheticStdf } from './synthetic-stdf.mjs';
+import { createStdfBuilder, ftrOnlyFixture, mprDefaultsFixture, mprScanFixture, defaultOnlyFixture, scanRecords } from './fixtures/typed-stdf.mjs';
+
+// Local Edge, generated fixtures only. No company STDF or external requests.
+const url = process.env.STDF_TEST_URL || 'http://127.0.0.1:5175';
+const local = address => ['localhost', '127.0.0.1', '[::1]'].includes(new URL(address).hostname);
+assert.ok(local(url), 'Typed UI tests require a loopback URL');
+const output = path.resolve('outputs/round4/typed');
+fs.mkdirSync(output, { recursive: true });
+const browser = await chromium.launch({ channel: 'msedge', headless: true });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1100 } });
+page.setDefaultTimeout(15000);
+const passed = [], errors = [], externalRequests = [], screenshots = [];
+page.on('pageerror', error => errors.push(error.message));
+await page.route('**/*', async route => {
+  const address = route.request().url();
+  if (/^https?:/.test(address) && !local(address)) { externalRequests.push(address); await route.abort(); }
+  else await route.continue();
+});
+const pass = label => { passed.push(label); console.log('PASS', label); };
+const explorer = () => page.getByRole('region', { name: 'Functional and multiple-return test explorer', exact: true });
+const catalog = () => explorer().getByRole('table', { name: 'Available functional and multiple-return tests', exact: true });
+const rows = () => explorer().locator('.typed-record-row');
+const detail = () => explorer().locator('.typed-record-details');
+const picker = () => explorer().getByRole('spinbutton', { name: 'Return result index (zero-based)', exact: true });
+const input = () => page.locator('input[type=file]').first();
+const nav = async name => {
+  const open = page.getByRole('button', { name: 'Open navigation' });
+  if (await open.isVisible()) await open.click();
+  await page.locator('.sidebar nav').getByRole('button', { name }).click();
+};
+const load = async (fixture, name, gzip = false) => {
+  await input().setInputFiles({ name, mimeType: 'application/octet-stream', buffer: gzip ? gzipSync(fixture.buffer) : fixture.buffer });
+  await page.waitForFunction(fileName => document.querySelector('.active-file small')?.textContent === fileName, name);
+  await nav('Test explorer'); await explorer().waitFor();
+  assert.equal(await page.locator('.record-coverage-panel').count(), 1, 'one source coverage panel per loaded run');
+};
+const family = kind => page.getByRole('group', { name: 'Test record family', exact: true }).getByRole('button', { name: new RegExp(`^${kind}`) });
+const openRow = async index => {
+  const toggle = rows().nth(index).locator('.typed-record-toggle');
+  if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
+  await detail().waitFor();
+};
+const clearFilters = () => explorer().getByRole('group', { name: 'Record filters', exact: true }).getByRole('button', { name: 'Clear filters', exact: true }).click();
+const sourceField = field => detail().locator('.typed-source-table tbody tr').filter({ has: page.getByRole('rowheader', { name: field, exact: true }) });
+const effectiveField = field => detail().locator('.typed-field-summary > div').filter({ has: page.locator('dt small').filter({ hasText: new RegExp(`^${field}$`) }) });
+const openSource = async () => {
+  const item = detail().locator('.typed-source-fields');
+  if (!(await item.evaluate(element => element.open))) await item.locator('summary').first().click();
+  await detail().getByRole('region', { name: 'Raw and effective record fields', exact: true }).waitFor();
+};
+const counts = async (records, parts) => assert.deepEqual(await explorer().locator('.typed-counts b').allTextContents(), [String(records), String(parts)]);
+const verdicts = () => rows().locator('td:nth-child(2) .typed-verdict').allTextContents();
+
+try {
+  await page.goto(url); await page.waitForLoadState('networkidle');
+  const ftr = ftrOnlyFixture();
+  await load(ftr, 'synthetic-ftr-only.stdf');
+  const pinPanel = () => page.locator('.pin-mapping-panel');
+  await pinPanel().locator('summary').click();
+  assert.equal(await pinPanel().locator('tbody tr').count(), 5);
+  const pinSearch = () => pinPanel().getByRole('searchbox', { name: 'Search pin mappings', exact: true });
+  await pinSearch().fill('SYNTHETIC_SUPPLY_A');
+  assert.equal(await pinPanel().locator('tbody tr').count(), 1);
+  assert.equal(await pinPanel().locator('tbody th').innerText(), '10');
+  await pinPanel().getByRole('button', { name: 'Clear search', exact: true }).click();
+  const omittedPin = pinPanel().locator('tbody tr').filter({ has: page.getByRole('rowheader', { name: '13', exact: true }) });
+  assert.equal(await omittedPin.locator('td').nth(4).innerText(), 'omitted (default 1)');
+  assert.equal(await omittedPin.locator('td').nth(5).innerText(), 'omitted (default 1)');
+  await pinSearch().fill('no_such_pin');
+  await pinPanel().getByRole('button', { name: 'Show all pin mappings', exact: true }).click();
+  assert.equal(await pinPanel().locator('tbody tr').count(), 5);
+  await pinSearch().fill('SYNTHETIC_SUPPLY_A');
+  await pinPanel().locator('summary').click();
+  pass('PMR names remain searchable; empty search recovery and explicit omitted/default-head/site labels work');
+  assert.equal(await family('FTR').getAttribute('aria-pressed'), 'true');
+  await counts(7, 6);
+  assert.equal(await rows().count(), 7);
+  assert.deepEqual(await verdicts(), ['PASS', 'FAIL', 'UNKNOWN', 'UNKNOWN', 'PASS', 'FAIL', 'PASS']);
+  assert.equal(await page.locator('.distribution-workspace:visible').count(), 0);
+  assert.equal(await catalog().locator('tbody tr.catalog-row').count(), 1);
+  assert.match(await explorer().locator('.typed-analysis-boundary').innerText(), /Histograms and capability statistics are not applied/);
+  assert.doesNotMatch(await page.locator('.record-coverage-panel > summary').innerText(), /not analyzed/);
+  await family('PTR').click();
+  assert.match(await page.locator('.test-family-workspace').innerText(), /No PTR measurements/);
+  await family('FTR').click();
+  pass('FTR-only run opens seven original records across six parts without invented PTR samples; family navigation and recorded outcomes remain explicit');
+
+  await explorer().getByRole('combobox', { name: 'Record verdict' }).selectOption('fail');
+  assert.equal(await rows().count(), 2);
+  await explorer().getByRole('combobox', { name: 'Head / site' }).selectOption('1:1');
+  assert.equal(await rows().count(), 0);
+  await explorer().getByRole('button', { name: 'Show all records', exact: true }).click();
+  assert.equal(await rows().count(), 7);
+  await explorer().getByRole('combobox', { name: 'Record verdict' }).selectOption('unknown');
+  assert.equal(await rows().count(), 2);
+  assert.deepEqual(await rows().locator('td:nth-child(3)').allTextContents(), ['Not executed', 'Executed']);
+  await clearFilters();
+  await explorer().getByRole('searchbox', { name: 'Search functional and multiple-return tests' }).fill('no_such_synthetic_test');
+  assert.equal(await catalog().locator('tbody tr.catalog-row').count(), 0);
+  assert.match(await explorer().locator('.typed-filter-note').innerText(), /outside the current catalog search/);
+  await explorer().getByRole('button', { name: 'Clear search', exact: true }).click();
+  assert.equal(await catalog().locator('tbody tr.catalog-row').count(), 1);
+  pass('record verdict/head-site filters, empty-state recovery and catalog search/clear work without dropping retained records');
+
+  await openRow(1);
+  assert.match(await detail().locator('.typed-record-source').innerText(), /head 1 \/ site 2.*PRR part #2/);
+  assert.equal(await effectiveField('NUM_FAIL').locator('dd').innerText(), '2');
+  await detail().locator('.typed-return-fields > summary').click();
+  await effectiveField('RTN_STAT').locator('summary').click();
+  await effectiveField('RTN_STAT').locator('li code').first().waitFor();
+  assert.deepEqual(await effectiveField('RTN_STAT').locator('li code').allTextContents(), ['0', '5', '10']);
+  await openSource();
+  assert.deepEqual((await sourceField('TEST_FLG').locator('td').allTextContents()).slice(0, 2), ['128', '128']);
+  assert.match(await sourceField('TEST_FLG').locator('td').last().innerText(), /Present.*record/);
+  const source = detail().getByRole('region', { name: 'Source record bytes', exact: true });
+  await source.getByRole('button', { name: 'View source bytes', exact: true }).click();
+  const hex = source.getByLabel('Source record hex preview', { exact: true });
+  await hex.waitFor();
+  const expectedRecord = scanRecords(ftr.buffer).records.filter(record => record.type === 15 && record.sub === 20)[1];
+  const expectedHex = [...ftr.buffer.subarray(expectedRecord.offset, expectedRecord.offset + 16)].map(byte => byte.toString(16).padStart(2, '0')).join(' ');
+  assert.ok((await hex.innerText()).startsWith(`${expectedRecord.offset.toString(16).padStart(8, '0')}: ${expectedHex}`));
+  await source.getByRole('button', { name: 'Clear bytes', exact: true }).click();
+  assert.equal(await hex.count(), 0);
+  await source.getByRole('button', { name: 'View source bytes', exact: true }).click();
+  await hex.waitFor();
+  await source.getByRole('button', { name: 'Reload source bytes', exact: true }).click();
+  await hex.waitFor();
+  pass('FTR expansion shows raw/effective flags, independent pin states and byte-for-byte local source preview; clear/reload works');
+
+  await openRow(6); await openSource();
+  assert.match(await sourceField('PATG_NUM').innerText(), /Omitted in this record.*7.*Inherited from record #/s);
+  pass('omitted FTR default fields expose their inherited value and original record ordinal');
+
+  await nav('Wafer map');
+  const map = () => page.locator('.wafer-page .wafer-grid-map');
+  assert.equal(await map().locator('.wafer-die').count(), 6);
+  await map().locator('.wafer-die[data-x="5"]').click();
+  const evidence = () => page.getByRole('region', { name: /^Test results for part \d+$/ });
+  const dieRows = () => evidence().locator('.die-results-table tbody > tr[data-kind]');
+  assert.deepEqual(await dieRows().evaluateAll(items => items.map(item => item.getAttribute('data-verdict'))), ['FAIL', 'PASS']);
+  const ordinals = await dieRows().evaluateAll(items => items.map(item => Number(item.getAttribute('data-record-ordinal'))));
+  assert.ok(ordinals[0] < ordinals[1]);
+  assert.match(await map().locator('.wafer-part-inspection > header h5').innerText(), /Head 1 \/ Site 2/);
+  assert.equal(await map().locator('.wafer-coverage-note').count(), 0);
+  await dieRows().first().getByRole('button', { name: /^Show details for FTR / }).click();
+  await evidence().locator('.typed-record-details').waitFor();
+  assert.equal(await evidence().locator('.typed-record-details').count(), 1);
+  assert.equal(await evidence().locator('.die-results-table tbody > tr[data-kind="PTR"]').count(), 0);
+  assert.match(await map().locator('.wafer-part-inspection .die-test-counts').innerText(), /1 PASS.*1 FAIL/s);
+  pass('FTR-only wafer retains six PRRs; selected die lists repeated functional FAIL then PASS in source order without undecoded-coverage claims');
+
+  const mpr = mprDefaultsFixture({ little: false });
+  await load(mpr, 'synthetic-mpr-defaults.stdf.gz', true);
+  await pinPanel().locator('summary').click();
+  assert.equal(await pinSearch().inputValue(), '');
+  assert.equal(await pinPanel().locator('tbody tr').count(), 5);
+  assert.equal(await family('MPR').getAttribute('aria-pressed'), 'true');
+  await counts(5, 4);
+  assert.equal(await catalog().locator('tbody tr.catalog-row').count(), 1);
+  assert.match(await explorer().locator('.typed-qualification-note').innerText(), /synthetic validation only/);
+  assert.deepEqual(await verdicts(), ['UNKNOWN', 'PASS', 'PASS', 'PASS', 'FAIL']);
+  assert.deepEqual(await rows().locator('.typed-indexed-result').allTextContents(), ['Missing', '1000', '1000', '1500', '500']);
+  await picker().fill('3');
+  assert.deepEqual(await rows().locator('.typed-indexed-result').allTextContents(), ['Missing', '4000', '4000', 'Missing', 'Missing']);
+  const mprVerdicts = await verdicts();
+  await picker().fill('999');
+  assert.ok((await rows().locator('.typed-indexed-result').allTextContents()).every(value => value === 'Choose a valid index'));
+  assert.deepEqual(await verdicts(), mprVerdicts);
+  await picker().fill('0'); await explorer().getByRole('button', { name: 'Next return result index', exact: true }).click();
+  assert.equal(await picker().inputValue(), '1');
+  await explorer().getByRole('button', { name: 'Previous return result index', exact: true }).click();
+  assert.equal(await picker().inputValue(), '0');
+  pass('MPR-only big-endian gzip has one test/four parts, preserves independent result lengths and shows Missing/invalid indices without cloned child verdicts');
+
+  await openRow(1);
+  assert.match(await detail().innerText(), /Different lengths are preserved/);
+  for (const [field, expected] of [['RTN_RSLT', ['1000', '2000', '3000', '4000']], ['RTN_INDX', ['10', '11', '12']], ['RTN_STAT', ['0', '5', '10']]]) {
+    await effectiveField(field).locator('summary').click();
+    await effectiveField(field).locator('li code').first().waitFor();
+    assert.deepEqual(await effectiveField(field).locator('li code').allTextContents(), expected);
+    assert.equal(await effectiveField(field).locator('.typed-verdict').count(), 0);
+  }
+  await openSource();
+  assert.match(await sourceField('RES_SCAL').innerText(), /Omitted in this record.*-3.*Inherited from record #/s);
+  assert.match(await sourceField('UNITS').innerText(), /Omitted in this record.*V.*Inherited from record #/s);
+  await openRow(2); await openSource();
+  assert.deepEqual((await sourceField('RES_SCAL').locator('td').allTextContents()).slice(0, 2), ['-6', '-6']);
+  assert.match(await sourceField('RES_SCAL').locator('td').last().innerText(), /Present.*record/);
+  assert.deepEqual((await sourceField('UNITS').locator('td').allTextContents()).slice(0, 2), ['A', 'A']);
+  assert.match(await sourceField('UNITS').locator('td').last().innerText(), /Present.*record/);
+  await openRow(3); await openSource();
+  assert.match(await sourceField('RES_SCAL').innerText(), /Omitted in this record.*-3.*Inherited from record #/s);
+  assert.match(await sourceField('UNITS').innerText(), /Omitted in this record.*V.*Inherited from record #/s);
+  pass('MPR arrays remain independently indexed, show no per-element PASS/FAIL, and expose first-default/local-override/restored-default provenance');
+
+  await detail().locator('.typed-source-fields > summary').click();
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 1100 });
+    await page.waitForTimeout(350);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `page overflow at ${width}`);
+    assert.ok((await explorer().boundingBox()).width > 200);
+    const screenshot = path.join(output, `typed-mpr-${width}.png`);
+    await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
+    await page.screenshot({ path: screenshot, fullPage: true }); screenshots.push(screenshot);
+  }
+  pass('1440/768/390 px typed explorer is usable without page overflow; screenshots contain generated data only');
+
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await load(mprScanFixture(), 'synthetic-mpr-scan.stdf');
+  await picker().fill('4');
+  assert.equal(await rows().locator('.typed-indexed-result').innerText(), '0.5');
+  await openRow(0);
+  await detail().locator('.typed-return-fields > summary').click();
+  assert.equal(await effectiveField('START_IN').locator('dd').innerText(), '2');
+  assert.equal(await effectiveField('INCR_IN').locator('dd').innerText(), '-0.5');
+  const firstScan = catalog().locator('.catalog-test-select').first();
+  await firstScan.focus(); await firstScan.press('ArrowDown');
+  assert.equal(await catalog().locator('.catalog-test-select').last().getAttribute('aria-pressed'), 'true');
+  assert.equal(await catalog().locator('.catalog-test-select').last().evaluate(element => element === document.activeElement), true);
+  await catalog().locator('.catalog-test-select').last().press('ArrowDown');
+  assert.equal(await catalog().locator('.catalog-test-select').last().getAttribute('aria-pressed'), 'true');
+  await catalog().locator('.catalog-test-select').last().press('Home');
+  assert.equal(await firstScan.getAttribute('aria-pressed'), 'true');
+  await firstScan.press('End');
+  assert.equal(await catalog().locator('.catalog-test-select').last().getAttribute('aria-pressed'), 'true');
+  assert.equal(await picker().isDisabled(), true);
+  assert.equal(await rows().locator('.typed-indexed-result').innerText(), 'Choose a valid index');
+  assert.equal(await verdicts().then(values => values[0]), 'UNKNOWN');
+  pass('scan START_IN/INCR_IN are visible; zero-result/nonexecuted MPR never manufactures a numeric zero or PASS');
+
+  await load(defaultOnlyFixture(), 'synthetic-defaults-only.stdf');
+  await counts(1, 0);
+  assert.deepEqual(await verdicts(), ['UNKNOWN']);
+  assert.equal(await rows().locator('td:nth-child(3)').innerText(), 'Not executed');
+  assert.equal(await rows().locator('td:nth-child(4)').innerText(), 'Unlinked');
+  await family('MPR').click();
+  await counts(1, 0);
+  assert.equal(await picker().isDisabled(), true);
+  assert.deepEqual(await verdicts(), ['UNKNOWN']);
+  await nav('Wafer map');
+  assert.equal(await page.locator('.wafer-page .wafer-die').count(), 0);
+  assert.match(await page.locator('.wafer-page .no-data').innerText(), /No valid wafer coordinates/);
+  pass('metadata-only input remains inspectable as unexecuted/unlinked records with zero covered parts, zero numeric results and no invented wafer dies');
+
+  const writer = createStdfBuilder();
+  writer.pmr({ index: 21, channelName: 'SYNTHETIC_EXPLICIT_ZERO', head: 0, site: 0 });
+  writer.pmr({ index: 22, lastField: 'PMR_INDX' });
+  writer.pir({ head: 2, site: 3 }); writer.ftr({ head: 2, site: 3, testFlag: 128 }); writer.mpr({ head: 2, site: 3, testFlag: 0 });
+  writer.prr({ head: 2, site: 3, flag: 24, hardBin: 5, softBin: 7, x: 9, y: 8 });
+  await load({ buffer: writer.bytes() }, 'synthetic-unknown-prr.stdf');
+  await pinPanel().locator('summary').click();
+  await pinSearch().fill('SYNTHETIC_EXPLICIT_ZERO');
+  assert.equal(await pinPanel().locator('tbody tr').count(), 1);
+  assert.equal(await pinPanel().locator('tbody td').nth(4).innerText(), '0');
+  assert.equal(await pinPanel().locator('tbody td').nth(5).innerText(), '0');
+  await pinPanel().getByRole('button', { name: 'Clear search', exact: true }).click();
+  assert.equal(await pinPanel().locator('tbody tr').count(), 2);
+  assert.equal(await pinPanel().locator('tbody tr').last().locator('td').nth(4).innerText(), 'omitted (default 1)');
+  await pinPanel().locator('summary').click();
+  pass('PMR reload resets search and distinguishes explicitly recorded head/site0 from omitted default1');
+  await nav('Wafer map');
+  const unknownDie = map().locator('.wafer-die[data-x="9"][data-y="8"]');
+  assert.equal(await unknownDie.getAttribute('data-disposition'), 'UNKNOWN');
+  assert.equal(await unknownDie.locator('text').textContent(), '?');
+  assert.equal(await unknownDie.locator('.wafer-die-fill').getAttribute('fill'), '#b5bdc6');
+  await unknownDie.click();
+  const inspected = page.getByRole('article', { name: 'Part 1 inspection', exact: true });
+  assert.equal(await inspected.locator('.die-part-summary .wafer-result-badge').innerText(), 'UNKNOWN');
+  assert.deepEqual(await dieRows().evaluateAll(items => items.map(item => item.getAttribute('data-verdict'))), ['FAIL', 'PASS']);
+  assert.match(await inspected.locator('header h5').innerText(), /Head 2 \/ Site 3/);
+  assert.equal(await map().locator('.wafer-coverage-note').count(), 0);
+  pass('unknown PRR stays gray UNKNOWN while FTR FAIL/MPR PASS evidence stays independent with original head/site');
+
+  const before = await evidence().innerText();
+  await input().setInputFiles({ name: 'synthetic-cancel-typed.stdf', mimeType: 'application/octet-stream', buffer: syntheticStdf({ parts: 100000 }) });
+  await page.getByRole('button', { name: 'Cancel loading', exact: true }).click();
+  await page.getByRole('status').filter({ hasText: 'Loading cancelled' }).waitFor();
+  assert.equal(await page.locator('.active-file small').innerText(), 'synthetic-unknown-prr.stdf');
+  assert.equal(await evidence().innerText(), before);
+  await page.getByRole('button', { name: 'Run options' }).click();
+  await page.getByRole('button', { name: 'Clear workspace', exact: true }).click();
+  assert.equal(await page.locator('.empty-active-file').count(), 1);
+  await load(ftr, 'synthetic-ftr-reopened.stdf');
+  assert.equal(await explorer().getByRole('combobox', { name: 'Record verdict' }).inputValue(), 'all');
+  assert.equal(await rows().count(), 7);
+  assert.equal(await detail().count(), 0);
+  pass('cancel preserves the active typed wafer; clear/reopen resets record filters and expanded details');
+
+  assert.equal(await page.locator('.record-coverage-panel').count(), 1, 'repeated interaction and run changes must not duplicate the source coverage panel');
+  assert.deepEqual(errors, []); assert.deepEqual(externalRequests, []);
+  pass('no browser runtime errors or external HTTP requests');
+} catch (error) { errors.push(error.stack || error.message); throw error; }
+finally {
+  fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify({ url, fixtureSource: 'Generated synthetic STDF only', passed, errors, externalRequests, screenshots }, null, 2));
+  await browser.close();
+}

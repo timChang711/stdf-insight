@@ -1,0 +1,17 @@
+.wafer-zoom-controls{display:flex;align-items:end;flex:1 1 500px;flex-wrap:wrap;gap:10px 12px;min-width:0;max-width:100%}
+.wafer-zoom-controls .wafer-zoom-slider-label{flex:1 1 190px;min-width:145px;max-width:320px}
+.wafer-zoom-slider-label>span{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.wafer-zoom-slider-label output{font-weight:500;color:#52606a;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wafer-zoom-controls input[type=range]{width:100%;height:36px;min-width:0;margin:0;accent-color:#6956cf;cursor:pointer;touch-action:pan-y}
+.wafer-zoom-editor{display:flex;align-items:end;flex-wrap:wrap;gap:8px;min-width:0;margin:0}
+.wafer-zoom-controls .wafer-zoom-editor label{flex:0 0 90px;min-width:0}
+.wafer-zoom-controls input[type=number]{width:90px;max-width:100%;min-height:36px;padding:7px 8px;border:1px solid #aab2b9;border-radius:4px;background:#fff;color:#222;font-size:13px;box-sizing:border-box}
+.wafer-zoom-controls input[aria-invalid=true]{border-color:#b12d2d;background:#fffafa}
+.wafer-zoom-controls button{min-height:36px;padding:7px 10px;border:1px solid #aab2b9;border-radius:4px;background:#fff;color:#214f70;font-size:12px;font-weight:600;white-space:nowrap;cursor:pointer}
+.wafer-zoom-controls button[aria-pressed=true]{color:#fff;background:#6956cf;border-color:#6956cf}
+.wafer-zoom-controls button:disabled{color:#6b737a;background:#eee;cursor:default;opacity:.7}
+.wafer-zoom-controls input:focus-visible,.wafer-zoom-controls button:focus-visible{outline:2px solid #165bb5;outline-offset:2px}
+.wafer-zoom-presets{display:flex;flex-wrap:wrap;gap:8px}
+.wafer-zoom-help{flex-basis:100%;font-size:11px;line-height:1.5;color:#52606a;margin:0}
+.wafer-zoom-help.wafer-zoom-error{color:#a12828}
+@media(max-width:800px){.wafer-zoom-controls{flex-basis:100%}.wafer-zoom-controls .wafer-zoom-slider-label{flex-basis:100%;max-width:none}.wafer-zoom-controls input[type=range]{height:40px}.wafer-zoom-controls button,.wafer-zoom-controls input[type=number]{min-height:40px}}

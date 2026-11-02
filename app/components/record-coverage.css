@@ -1,0 +1,12 @@
+.record-coverage-panel{min-width:0;max-width:100%;box-sizing:border-box}
+.record-coverage-panel:not(.has-unread-tests){background:#f4f7fb;border-color:#cbd7e4;color:#34495e}
+.record-coverage-panel summary{cursor:pointer;line-height:1.5}
+.record-coverage-panel p{line-height:1.6;overflow-wrap:anywhere}
+.record-coverage-table{max-width:100%;max-height:400px;overflow:auto;margin:14px 0;border:1px solid #bdc9d4;border-radius:4px;background:#fff;color:#253744}
+.record-coverage-table:focus-visible{outline:2px solid #526ac4;outline-offset:2px}
+.record-coverage-table table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
+.record-coverage-table caption{text-align:left;padding:10px;font-weight:600;background:#f3f6f9}
+.record-coverage-table th,.record-coverage-table td{padding:9px 11px;text-align:left;border-bottom:1px solid #dce3e9}
+.record-coverage-table thead th{background:#eef2f6;position:sticky;top:0;z-index:1}
+.record-coverage-table td:nth-child(5){min-width:200px;white-space:normal}
+.record-support-not-decoded{color:#80520d;font-weight:650}.record-support-partial{color:#40578d}.record-support-validated{color:#246449}

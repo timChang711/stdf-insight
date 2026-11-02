@@ -1,0 +1,36 @@
+.pin-mapping-panel{box-sizing:border-box;min-width:0;max-width:100%;margin:16px 0 0;border:1px solid #cbd6e1;border-radius:6px;background:#fff;color:#24374a;font-size:12px;line-height:1.5}
+.pin-mapping-panel *{box-sizing:border-box}
+.pin-mapping-panel>summary{padding:12px 14px;cursor:pointer;color:#294c6b;font-weight:700;line-height:1.5}
+.pin-mapping-panel>summary>span{display:inline-block;margin-left:9px;color:#607080;font-size:11px;font-weight:500}
+.pin-mapping-content{min-width:0;padding:0 14px 14px}
+.pin-mapping-panel p{margin:10px 0;overflow-wrap:anywhere}
+.pin-mapping-panel .pin-mapping-warning{padding:10px 12px;border:1px solid #ddc797;border-radius:5px;background:#fff8e9;color:#684819}
+.pin-mapping-toolbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;margin-top:14px}
+.pin-mapping-toolbar label{display:flex;flex-direction:column;gap:5px;flex:1 1 260px;min-width:0;color:#334e68;font-size:12px;font-weight:650}
+.pin-mapping-panel input,.pin-mapping-panel button{font:inherit}
+.pin-mapping-panel input{min-height:38px;width:100%;min-width:0;padding:8px 10px;border:1px solid #acbccd;border-radius:5px;background:#fff;color:#24374a}
+.pin-mapping-panel button{min-height:38px;padding:7px 12px;border:1px solid #acbccd;border-radius:5px;background:#fff;color:#294c6b;font-weight:600;cursor:pointer}
+.pin-mapping-panel button:hover:enabled{background:#eef4fb;border-color:#7898ba}
+.pin-mapping-panel button:disabled{opacity:.6;cursor:default;background:#f2f5f8}
+.pin-mapping-panel input:focus-visible,.pin-mapping-panel button:focus-visible,.pin-mapping-panel>summary:focus-visible,.pin-mapping-table-scroll:focus-visible{outline:2px solid #275dcc;outline-offset:2px}
+.pin-mapping-panel .pin-mapping-help{font-size:11px;color:#596c7e;line-height:1.6}
+.pin-mapping-panel .pin-mapping-count{font-size:12px;font-weight:650;color:#334e68}
+.pin-mapping-count>span{font-weight:400;color:#596c7e}
+.pin-mapping-table-scroll{width:100%;max-width:100%;max-height:470px;overflow:auto;overscroll-behavior:contain;border:1px solid #d6dfe8;border-radius:4px;background:#fff}
+.pin-mapping-panel table{width:100%;min-width:980px;border-collapse:collapse;text-align:left;font-size:12px}
+.pin-mapping-panel caption{text-align:left;padding:10px 12px;color:#536a7f;background:#f6f8fb;font-size:11px}
+.pin-mapping-panel th,.pin-mapping-panel td{padding:9px 11px;border-bottom:1px solid #e1e7ef;vertical-align:top;text-align:left;font-variant-numeric:tabular-nums}
+.pin-mapping-panel thead th{position:sticky;top:0;z-index:1;background:#edf2f7;color:#344c63;white-space:nowrap;font-size:11px}
+.pin-mapping-panel tbody th{font-weight:650}
+.pin-mapping-panel tbody tr:last-child>*{border-bottom:0}
+.pin-mapping-panel td:nth-child(3),.pin-mapping-panel td:nth-child(4),.pin-mapping-panel td:nth-child(5){min-width:150px;max-width:300px;overflow-wrap:anywhere}
+.pin-mapping-panel td:nth-child(6),.pin-mapping-panel td:nth-child(7){min-width:100px}
+.pin-mapping-panel td:nth-child(8),.pin-mapping-panel td:nth-child(9){white-space:nowrap}
+.pin-mapping-raw{white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.pin-mapping-panel .pin-mapping-missing{color:#687687;font-size:11px;font-weight:400}
+.pin-mapping-panel .pin-mapping-duplicate>th{background:#fff8e9;color:#684819}
+.pin-mapping-duplicate-label{display:block;margin-top:3px;font-size:10px;font-weight:600}
+.pin-mapping-pagination{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:12px}
+.pin-mapping-pagination>span{font-size:11px;color:#596c7e;font-variant-numeric:tabular-nums}
+.pin-mapping-empty{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:20px 12px;border:1px dashed #c7d3df;border-radius:5px;color:#596c7e}
+@media(max-width:520px){.pin-mapping-content{padding:0 10px 12px}.pin-mapping-panel>summary{padding:11px 10px}.pin-mapping-toolbar{align-items:stretch}.pin-mapping-toolbar label{flex-basis:100%}.pin-mapping-toolbar>button{min-height:40px}.pin-mapping-pagination{justify-content:space-between;gap:8px}.pin-mapping-pagination button{min-height:40px}}

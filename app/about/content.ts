@@ -1,0 +1,78 @@
+export type AboutLocale = "zh-Hant" | "en";
+export function resolveAboutLocale(lang: string | string[] | undefined): AboutLocale {
+  return lang === "en" ? "en" : "zh-Hant";
+}
+export const aboutCopy = {
+  "zh-Hant": {
+    pageTitle: "關於 Tim Chang | STDF Insight",
+    home: "返回 STDF Insight 首頁",
+    openAnalyzer: "開啟分析工具",
+    languageLabel: "頁面語言",
+    kicker: "開發者的話",
+    title: "讓測試現場更快做出判斷。",
+    lede: "STDF Insight 協助第一線測試工程師，以更少的工具與準備步驟，從原始測試檔案找出可採取行動的線索。",
+    role: "資深測試工程師 · ATE 與 STDF 分析",
+    workflowLabel: "STDF 分析流程",
+    workflowTitle: "從檔案到答案",
+    steps: [
+      { title: "載入 STDF", body: "直接載入現場測試資料" },
+      { title: "本機解析", body: "在瀏覽器中完成" },
+      { title: "檢視分析結果", body: "良率、測項、測試站點與晶圓" },
+    ],
+    workflowNote: "不必先轉入 JMP，也不必每次重新建立解析流程。",
+    whyLabel: "開發初衷",
+    whyTitle: "減少資料準備，專注解決問題。",
+    paragraphs: [
+      "在測試現場，時間常常花在準備資料：尋找解析工具、開啟既有的 JMP 流程、轉換檔案，或另外撰寫解析程式，才能開始查看測試結果。",
+      "我開發 STDF Insight，是希望讓第一線測試工程師能直接載入 STDF 測試資料，在瀏覽器內快速查看良率、失敗測項、測試站點平衡度、晶圓分布特徵與測項分布。不需要先透過 JMP，也不必為每次問題重複準備解析流程。",
+      "當異常發生時，工程師應該把時間用在理解資料、定位原因與做出判斷，而不是等待資料被轉成可以分析的格式。",
+    ],
+    principlesTitle: "產品原則",
+    principles: [
+      { title: "直接載入", body: "開啟 STDF 或壓縮的 STDF 檔案，省去額外的轉檔流程。" },
+      { title: "加快判斷", body: "在同一個工作區查看良率、測項、測試站點、數值分布與晶圓層級的分析結果。" },
+      { title: "資料留在本機", body: "解析在瀏覽器內執行，測試檔案保留在工程師的裝置上。" },
+    ],
+    contactLabel: "歡迎交流",
+    contactTitle: "歡迎分享測試現場的使用回饋。",
+    contactBody: "歡迎以中文或英文交流。如果你遇到檔案解析的特殊情況、希望支援其他 STDF 記錄類型，或有更貼近測試現場的分析需求，都可以與我聯絡。",
+    email: "電子郵件",
+    connect: "與 Tim Chang 聯繫",
+  },
+  en: {
+    pageTitle: "About Tim Chang | STDF Insight",
+    home: "Back to STDF Insight",
+    openAnalyzer: "Open analyzer",
+    languageLabel: "Page language",
+    kicker: "BUILDER NOTE",
+    title: "Built for faster decisions on the test floor.",
+    lede: "STDF Insight helps frontline test engineers move from a raw test file to an actionable signal—with fewer tools and fewer preparation steps.",
+    role: "Senior Test Engineer · ATE & STDF analytics",
+    workflowLabel: "STDF analysis workflow",
+    workflowTitle: "FROM FILE TO ANSWER",
+    steps: [
+      { title: "Load STDF", body: "Directly from the test floor" },
+      { title: "Parse locally", body: "Inside the browser" },
+      { title: "Review signals", body: "Yield, tests, sites, and wafer" },
+    ],
+    workflowNote: "No JMP handoff. No repeated parsing setup.",
+    whyLabel: "WHY I BUILT IT",
+    whyTitle: "Less time preparing data. More time solving the problem.",
+    paragraphs: [
+      "On the test floor, time often goes into preparing data: finding a parser, opening an existing JMP workflow, converting files, or writing a parsing script before reviewing the results.",
+      "I built STDF Insight so frontline test engineers can load STDF test data directly and quickly inspect yield, failing tests, site balance, wafer signatures, and test distributions in the browser. There is no need to go through JMP first or rebuild a parsing workflow for each issue.",
+      "When an anomaly appears, engineers should be able to focus on understanding the data, identifying the cause, and making a decision, rather than waiting for the data to become ready for analysis.",
+    ],
+    principlesTitle: "PRODUCT PRINCIPLES",
+    principles: [
+      { title: "Load directly", body: "Open STDF or compressed STDF files without a separate conversion workflow." },
+      { title: "Decide faster", body: "Bring yield, test, site, distribution, and wafer-level signals into one workspace." },
+      { title: "Keep data local", body: "Parsing runs in the browser, so test files stay on the engineer’s device." },
+    ],
+    contactLabel: "LET’S EXCHANGE IDEAS",
+    contactTitle: "Feedback from real test-floor work is welcome.",
+    contactBody: "You’re welcome to get in touch in Chinese or English. If you encounter a parsing edge case, need support for another STDF record type, or have an analysis need from the test floor, I’d like to hear from you.",
+    email: "Email",
+    connect: "Connect with Tim Chang",
+  },
+};

@@ -1,0 +1,138 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "0045282f-10a0-47a9-b0ab-a06c7ff3ecac",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "feedback": {
+      "name": "feedback",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "moderation": {
+          "name": "moderation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'new'"
+        },
+        "reply": {
+          "name": "reply",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "submitter_key": {
+          "name": "submitter_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "feedback_public_created_idx": {
+          "name": "feedback_public_created_idx",
+          "columns": [
+            "moderation",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "feedback_submitter_idx": {
+          "name": "feedback_submitter_idx",
+          "columns": [
+            "submitter_key"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "feedback_category_check": {
+          "name": "feedback_category_check",
+          "value": "\"feedback\".\"category\" in ('feedback', 'feature', 'bug')"
+        },
+        "feedback_moderation_check": {
+          "name": "feedback_moderation_check",
+          "value": "\"feedback\".\"moderation\" in ('pending', 'approved', 'hidden')"
+        },
+        "feedback_status_check": {
+          "name": "feedback_status_check",
+          "value": "\"feedback\".\"status\" in ('new', 'planned', 'in_progress', 'completed')"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}
